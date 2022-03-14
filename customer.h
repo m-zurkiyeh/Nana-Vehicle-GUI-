@@ -10,7 +10,7 @@ class Customer {
 private:
 	string firstName, lastName, streetAddress, beginRentDate,beginEndDate;
 	bool isPreferred;
-	int age, counter = 0;
+	int age = 0, counter = 0;
 	RentalLocation rentalLocation;
 	vector<Vehicle> vehicles;
 	

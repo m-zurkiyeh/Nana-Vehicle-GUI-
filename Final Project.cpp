@@ -29,28 +29,21 @@ using namespace nana;
 
 int main()
 {
-	//Define a form.
+	// GUI attributes such as buttons, forms etc
+	//*************************************************************************
 	form fm{ rectangle{520,160,500,500} };
 	label time{ fm };
-
 	timer clock{ std::chrono::seconds{0} };
 	vector<Customer> customers;
 	vector<Vehicle> vehicles;
 	vector<RentalLocation> rentalLocations;
-
 	time.format(true);
-
-	//Define a label and display a text.
 	label lab{ fm, "<bold blue size=12>Welcome to the car rental system</>" };
 	lab.format(true);
-
 	button addCustButton{ fm,"Add Customer" };
 	button removeCustButton{ fm,"Remove Customer" };
-
-	//Define a button and answer the click event.
 	button quitBtn{ fm, "Quit" };
 	quitBtn.events().click([&fm] {fm.close(); });
-
 	button assignLocationtoVehicle{ fm,"Assign rental location to vehicle" };
 	button addCar{ fm,"Add Vehicle" };
 	button removeCar{ fm,"Remove Vehicle" };
@@ -60,7 +53,10 @@ int main()
 	button timerButton{ fm, "Display time counter" };
 	button assignVehtoCust{ fm,"Assign vehicle to customer" };
 	button preferred{ fm,"Set customer to preferred status" };
+	//************************************************************************
 
+	//Dummy objects to test the program's other features
+	//*****************************
 
 	Customer test1("Mike", "Wazowski", 55, "1234 Arsene Lupin ave");
 	Customer test2("Sulley", "Goliath", 65, "6789 Snowman blvd");
@@ -74,11 +70,12 @@ int main()
 	customers.push_back(test1);
 	customers.push_back(test2);
 
-	vehicles.push_back(testVeh1);
+	vehicles.push_back(testVeh1);		
 	vehicles.push_back(testVeh2);
 
 	rentalLocations.push_back(testRl1);
 	rentalLocations.push_back(testRl2);
+	//*******************************
 
 
 
@@ -126,7 +123,17 @@ int main()
 			lnText.getline(0, lName);
 			ageText.getline(0, age);
 			saText.getline(0, sa);
-			Customer cust(fName, lName, stoi(age), sa);
+			Customer cust(fName, lName, 0, sa);
+			try {
+				cust.setAge(stoi(age));
+			}
+			catch (...) {
+				msgbox ageInputError("Age Input Error");
+				ageInputError << "Age Input Error";
+				ageInputError.show();
+				return;
+			}
+			cout << "Name is:" << fName;
 			for (Customer c : customers) {
 				if (c.getFirstName() == cust.getFirstName() && c.getLastName() == cust.getLastName() && c.getAge() == cust.getAge() && c.getStreetAddress() == cust.getStreetAddress()) {
 					msgbox alreadyExistsMessageCustomer("Warning!!");
@@ -135,7 +142,13 @@ int main()
 					return;
 				}
 			}
-			customers.push_back(cust);
+			if ((fName.empty() && lName.empty() && sa.empty()) || fName.empty() || lName.empty() || sa.empty()) {
+				msgbox oneOrMoreEmpty("Empty Values Detected");
+				oneOrMoreEmpty << "One or more attributes have been detected!\n Please make sure that all of the attributes have been filled";
+				oneOrMoreEmpty.show();
+				return;
+			} else customers.push_back(cust);
+
 			cout << "Customers in the database:" << endl;
 			for (Customer c : customers) cout << "First Name: " << c.getFirstName() + ", last name: " + c.getLastName() + ", age: " + std::to_string(c.getAge()) + " and street address: " + c.getStreetAddress() << endl;
 			});
@@ -151,25 +164,38 @@ int main()
 		deleteForm.div("vert <cbx> <b>");
 		deleteForm["cbx"] << combo;
 		deleteForm["b"] << deleteButton;
-
-		for (Customer cust : customers) {
-			if (customers.empty())
-				break;
-			else combo.push_back(cust.getFirstName() + " " + cust.getLastName());
+		if (customers.empty()) {
+			msgbox emptList("Error!");
+			emptList << "List of customers is empty!! Please add one or more customer before proceeding to deletion of customer";
+			emptList.show();
+			return;
 		}
+		for (Customer cust : customers) {
+			
+			combo.push_back(cust.getFirstName() + " " + cust.getLastName());
+		}
+
 		deleteButton.events().click([&] {
 			int i = 0;
 			cout << combo.text(0) << endl;
+			if (combo.option() == EMPTY_COMBO_VALUE) {
+				msgbox emptVal("Error!");
+				emptVal << "Invalid Option Selected!";
+				emptVal.show();
+				return;
+			}
 			for (Customer cust : customers) {
 				string firstLastName = cust.getFirstName() + " " + cust.getLastName();
-				if (firstLastName == combo.text(0)) {
-					cout << "Found" << endl;
+				if (firstLastName == combo.text(combo.option())) {
 					combo.erase(i);
 					customers.erase(customers.begin() + i);
+					msgbox deletedCust("Customer deletion status");
+					deletedCust << "Customer " << firstLastName << ", Age " << cust.getAge() << " and living at " << cust.getStreetAddress() << " Has been successfully deleted";
+					deletedCust.show();
+					break;
 				}
 				i++;
 			}
-			cout << "Not Found" << endl;
 			});
 		deleteForm.collocate();
 		API::modal_window(deleteForm);
@@ -214,13 +240,15 @@ int main()
 				}
 			}
 			vehicles.push_back(veh);
-			//nana::audio::player ringPing(".sfx/sonicring.mp3");
+			msgbox vehicleAddResult("Vehicle Creation Result!");
+			vehicleAddResult << "The Vehicle " << veh.getCarCompany() << " " << veh.getCarName() << " has been successfully created";
+			vehicleAddResult.show();
 			using namespace nana;
 			//ringPing.play();
 
 			for (Vehicle v : vehicles) {
 				if (vehicles.empty()) break;
-				else cout << v.toString();
+				else cout << v.toString() << "\n";
 			}
 			});
 
@@ -239,6 +267,14 @@ int main()
 		removeCarForm["CCMB"] << removeCarCombo;
 		removeCarForm["CCB"] << finalizeCarRemoval;
 
+			if (vehicles.empty()) {
+				msgbox emptVehListErr("Error!");
+				emptVehListErr << "Error! Vehicle list is empty!! Please add one or more vehicles before attempting to delete a vehicle";
+				emptVehListErr.show();
+				return;
+			}
+
+
 		for (Vehicle v : vehicles)
 			if (vehicles.empty())
 				break;
@@ -247,9 +283,15 @@ int main()
 		finalizeCarRemoval.events().click([&] {
 			int i = 0;
 			string fullCarInfo;
+			if (removeCarCombo.option() == EMPTY_COMBO_VALUE) {
+				msgbox emptyVal("Error!");
+				emptyVal << "Error! Invalid Option Selected";
+				emptyVal.show();
+				return;
+			}
 			for (Vehicle v : vehicles) {
 				fullCarInfo = v.getCarCompany() + " " + v.getCarName();
-				if (fullCarInfo == removeCarCombo.text(0)) {
+				if (fullCarInfo == removeCarCombo.text(removeCarCombo.option())) {
 					removeCarCombo.erase(i);
 					vehicles.erase(vehicles.begin() + i);
 					break;
@@ -545,6 +587,12 @@ int main()
 		preference.div("vert <cL> <sP>");
 		preference["cL"] << cust;
 		preference["sP"] << preButton;
+		if (customers.empty()) {
+			msgbox emptCustListErr("Error!");
+			emptCustListErr << "Customer list is empty! Please add one or more customers!!";
+			emptCustListErr.show();
+			return;
+		}
 		for (Customer c : customers) {
 			cust.push_back(c.getFirstName() + " " + c.getLastName());
 		}

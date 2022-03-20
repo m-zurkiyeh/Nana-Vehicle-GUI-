@@ -19,12 +19,21 @@
 #include <nana/gui/widgets/toolbar.hpp>
 #include <nana/audio/player.hpp>
 #include <nana/threads/pool.hpp>
+#include <windows.h>
+#include <iostream>
+#include<mmsystem.h>
+#include<stdlib.h>
+#include <nana/audio/player.hpp>
+#include <nana/threads/pool.hpp>
+#pragma comment(lib, "winmm.lib")
+#include <tchar.h>
 #define EMPTY_COMBO_VALUE 18446744073709551615
 
 
 
 using namespace std;
 using namespace nana;
+//using namespace nana::audio::player;
 
 
 int main()
@@ -64,8 +73,8 @@ int main()
 	Vehicle testVeh1("Honda", "Yoda");
 	Vehicle testVeh2("Mazda", "Dazda");
 
-	RentalLocation testRl1(888, "Street Blvd", "BNG4TG");
-	RentalLocation testRl2(555, "Address Street", "V9HQ3E");
+	RentalLocation* testRl1 = new RentalLocation(888, "Street Blvd", "BNG4TG");
+	RentalLocation* testRl2 = new RentalLocation(555, "Address Street", "V9HQ3E");
 
 	customers.push_back(test1);
 	customers.push_back(test2);
@@ -73,8 +82,8 @@ int main()
 	vehicles.push_back(testVeh1);		
 	vehicles.push_back(testVeh2);
 
-	rentalLocations.push_back(testRl1);
-	rentalLocations.push_back(testRl2);
+	rentalLocations.push_back(*testRl1);
+	rentalLocations.push_back(*testRl2);
 	//*******************************
 
 
@@ -239,6 +248,7 @@ int main()
 					return;
 				}
 			}
+			//nana::audio::player player("sonicring.wav");
 			vehicles.push_back(veh);
 			msgbox vehicleAddResult("Vehicle Creation Result!");
 			vehicleAddResult << "The Vehicle " << veh.getCarCompany() << " " << veh.getCarName() << " has been successfully created";
@@ -338,19 +348,42 @@ int main()
 			sNumBox.getline(0, sNumber);
 			sNameBox.getline(0, sName);
 			pcBox.getline(0, pCode);
-			RentalLocation rl(stoi(sNumber), sName, pCode);
+			RentalLocation* rl{};
+			
+			try { 
+				rl = new RentalLocation(stoi(sNumber), sName, pCode);
+			}
+			catch (...) {
+				msgbox intErr("Input Error!");
+				intErr << "Invalid input entered for street number! Please enter an integer";
+				intErr.show();
+				delete rl;
+				return;
+			}
 
 			for (RentalLocation rLoc : rentalLocations) {
-				if (rLoc.getStreetNumber() == rl.getStreetNumber() && rLoc.getStreetName() == rl.getStreetName() && rLoc.getPostalCode() == rl.getPostalCode()) {
+				if (rLoc.getStreetNumber() == rl->getStreetNumber() && rLoc.getStreetName() == rl->getStreetName() && rLoc.getPostalCode() == rl->getPostalCode()) {
 					msgbox alreadyExistsMessageRL("Warning!!");
-					alreadyExistsMessageRL << std::string() + "Warning!! The rental location with the Street Number : " + std::to_string(rl.getStreetNumber()) + " , with the Street Name : " + rl.getStreetName() + " and with the Postal Code: " + rl.getPostalCode() + " already exists!!";
+					alreadyExistsMessageRL << std::string() + "Warning!! The rental location with the Street Number : " + std::to_string(rl->getStreetNumber()) + " , with the Street Name : " + rl->getStreetName() + " and with the Postal Code: " + rl->getPostalCode() + " already exists!!";
 					alreadyExistsMessageRL.show();
+					delete rl;
 					return;
 				}
 			}
 
-			rentalLocations.push_back(rl);
-
+			//Empty Value detection during Rental Location creation
+			if ((sNumber.empty() && sName.empty() && pCode.empty()) || sNumber.empty() || sName.empty() || pCode.empty()) {
+				msgbox emptyVal("Empty Input(s) detected!");
+				emptyVal << "One or more empty values have been detected! Please enter values on the respective box";
+				emptyVal.show();
+				delete rl;
+			}
+			else {
+				rentalLocations.push_back(*rl); 
+				msgbox rlAddResult("Rental Location Addition Result"); //Message notifying user of a succesful addition of a new Rental Location
+				rlAddResult << "The Rental Location " << rl->getStreetNumber() << " " << rl->getStreetName() << " with the postal code " << rl->getPostalCode() << " has been successfully created!";
+				rlAddResult.show();
+			}
 			});
 
 
@@ -422,6 +455,12 @@ int main()
 			string baseRlInfo;
 			string carInfo;
 			cout << vehicleList.option() << endl;
+			if (vehicleList.option() == EMPTY_COMBO_VALUE) {
+				msgbox emptVal("Choice selection error"); //If empty value selected, display error message then stop process 
+				emptVal << "Invalid choice selected! Please choose a valid option";
+				emptVal.show();
+				return;
+			}
 			for (Vehicle& v : vehicles) {
 				carInfo = v.getCarCompany() + " " + v.getCarName();
 				if (carInfo == vehicleList.text(vehicleList.option())) {

@@ -77,4 +77,6 @@ void Customer::setPreferred(bool& boolean) { isPreferred = boolean; }
 
 bool Customer::getPreferred() { return isPreferred; }
 
+vector<Vehicle> Customer::getVehicleList() { return vehicles; }
+
 #endif

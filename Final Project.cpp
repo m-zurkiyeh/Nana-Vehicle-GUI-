@@ -64,6 +64,7 @@ int main()
 	button assignVehtoCust{ fm,"Assign vehicle to customer" };
 	button preferred{ fm,"Set customer to preferred status" };
 	button dateDisplay{ fm, "Display Current Date" };
+	button returnRentedVeh{ fm, "Return rented car" };
 	time_t currentTime = time(0);
 	char* dateInString = ctime(&currentTime);
 	label dateDisplayLabel{fm};
@@ -547,9 +548,10 @@ int main()
 					if (custInfo == customerList.text(customerList.option())) {
 						for (Vehicle& v : vehicles) {
 							carInfo = v.getCarCompany() + " " + v.getCarName();
-							if (carInfo == rentalLocationsList.text(rentalLocationsList.option())) {
-
+							if (carInfo == vehiclesList.text(vehiclesList.option())) {
 								c.addRentalVehToList(v);
+								cout << "completed";
+								break;
 							}
 						}
 					}
@@ -557,12 +559,6 @@ int main()
 				});
 
 			});
-
-		registrationButton.events().click([&] {
-			string rlInfo, vehInfo, custInfo;
-
-			});
-
 
 		registration.collocate();
 		API::modal_window(registration);
@@ -656,20 +652,70 @@ int main()
 		API::modal_window(preference);
 		});
 
-	dateDisplay.events().click([&] {
-		dateDisplayLabel.caption("Current Date: " +  string(dateInString));
+	returnRentedVeh.events().click([&] {
+		string fullCustName, originListCustName, fullCarName, originListCarName;
+		int i = 0;
+		form returnForm{ fm };
+		combox custBox{ returnForm };
+		combox vehBox{ returnForm };
+		button finalizeReturn{ returnForm, "Return Vehicle"};
+		label custLab{ returnForm }, vehLab{ returnForm };
+		custLab.format(true);
+		vehLab.format(true);
+		custLab.caption("Customer");
+		vehLab.caption("Vehicle");
+
+		returnForm.div("vert<<cl><cb>> vert<<vl><vb>> vert<<fr>>");
+		returnForm["cl"] << custLab;
+		returnForm["cb"] << custBox;
+		returnForm["vl"] << vehLab;
+		returnForm["vb"] << vehBox;
+		returnForm["fr"] << finalizeReturn;
+		
+		for (Customer c : customers) {
+			fullCustName = c.getFirstName() + " " + c.getLastName();
+			custBox.push_back(fullCustName);
+		}
+
+		custBox.events().selected([&] {
+			vehBox.clear();
+			for(Customer c : customers) {
+				originListCustName = c.getFirstName() + " " + c.getLastName();
+				if (originListCustName == custBox.text(custBox.option())) {
+					vector<Vehicle>& clVehicles = c.getVehicleList();
+					for (Vehicle& v : clVehicles) {
+						fullCarName = v.getCarCompany() + " " + v.getCarName();
+						vehBox.push_back(fullCarName);
+					}
+				}
+			}
+			});
+
+		finalizeReturn.events().click([&] {
+			
+			for (Customer c : customers) {
+				originListCustName = c.getFirstName() + " " + c.getLastName();
+				if (originListCustName == custBox.text(custBox.option())) {
+					vector<Vehicle>& clVehicles = c.getVehicleList();
+					for (Vehicle& v : clVehicles) {
+						fullCarName = v.getCarCompany() + " " + v.getCarName();
+						if (fullCarName == vehBox.text(vehBox.option())) {
+							vehBox.erase(vehBox.option());
+							clVehicles.erase(clVehicles.begin() + i);
+							break;
+						} 
+						i++;
+					}
+				}
+			}
+
+
+			});
+
+
+		returnForm.collocate();
+		API::modal_window(returnForm);
 		});
-
-	
-
-	clock.elapse([&] {
-		timeDisplay.caption(" Time: " + std::to_string(i++));
-		});
-
-
-	timerButton.events().click([&] {clock.start();});
-
-	quitBtn.events().click([&fm] {fm.close(); });
 
 	aboutButton.events().click([&fm] {
 		msgbox abtProjectmsg("About Project");
@@ -677,8 +723,18 @@ int main()
 		abtProjectmsg.show();
 		});
 
+	dateDisplay.events().click([&] {dateDisplayLabel.caption("Current Date: " +  string(dateInString));});
+
+	clock.elapse([&] {timeDisplay.caption(" Time: " + std::to_string(i++));});
+
+	timerButton.events().click([&] {clock.start();});
+
+	quitBtn.events().click([&fm] {fm.close();});
+
+
+
 	//Layout management
-	fm.div("vert <<text>> vert<<time><date>> vert<<button1><button2>> vert<<button3><button4>> vert<<button5><button6>> vert<<button7><button8>> vert<<button9><button10>> vert<<button11> <button12>> <button13> <button14>");
+	fm.div("vert <<text>> vert<<time><date>> vert<<button1><button2>> vert<<button3><button4>> vert<<button5><button6>> vert<<button7><button8>> vert<<button9><button10>> vert<<button11><button12>> vert<<button13><button14>> <button15>");
 	fm["text"] << lab;
 	fm["time"] << timeDisplay;
 	fm["date"] << dateDisplayLabel;
@@ -691,11 +747,12 @@ int main()
 	fm["button7"] << assignLocationtoVehicle;
 	fm["button8"] << displayAll;
 	fm["button9"] << assignVehtoCust;
-	fm["button10"] << timerButton;
-	fm["button11"] << preferred;
-	fm["button12"] << dateDisplay;
-	fm["button13"] << aboutButton;
-	fm["button14"] << quitBtn;
+	fm["button10"] << returnRentedVeh;
+	fm["button11"] << timerButton;
+	fm["button12"] << preferred;
+	fm["button13"] << dateDisplay;
+	fm["button14"] << aboutButton;
+	fm["button15"] << quitBtn;
 
 
 	fm.collocate();

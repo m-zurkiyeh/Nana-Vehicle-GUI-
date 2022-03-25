@@ -37,6 +37,7 @@ public:
 	int getAge();
 	bool getPreferred();
 	RentalLocation getRentalLocation();
+	vector<Vehicle> getVehicleList();
 
 
 };

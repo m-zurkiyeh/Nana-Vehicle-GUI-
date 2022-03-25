@@ -21,12 +21,13 @@
 #include <nana/threads/pool.hpp>
 #include <windows.h>
 #include <iostream>
-#include<mmsystem.h>
-#include<stdlib.h>
+#include <mmsystem.h>
+#include <stdlib.h>
 #include <nana/audio/player.hpp>
 #include <nana/threads/pool.hpp>
-#pragma comment(lib, "winmm.lib")
+#include <ctime>
 #include <tchar.h>
+#pragma comment(lib, "winmm.lib")
 #define EMPTY_COMBO_VALUE 18446744073709551615
 
 
@@ -38,30 +39,35 @@ using namespace nana;
 
 int main()
 {
-	// GUI attributes such as buttons, forms etc
+	// GUI attributes such as buttons, forms and other necessary variables
 	//*************************************************************************
 	form fm{ rectangle{520,160,500,500} };
-	label time{ fm };
+	label timeDisplay{ fm };
 	timer clock{ std::chrono::seconds{0} };
 	vector<Customer> customers;
 	vector<Vehicle> vehicles;
 	vector<RentalLocation> rentalLocations;
-	time.format(true);
-	label lab{ fm, "<bold blue size=12>Welcome to the car rental system</>" };
+	timeDisplay.format(true);
+	label lab{ fm, "<bold blue size=12 center>\t\t\t\t\t\t\t\tWelcome to the Car Rental System</>" };
 	lab.format(true);
 	button addCustButton{ fm,"Add Customer" };
 	button removeCustButton{ fm,"Remove Customer" };
+	button aboutButton{ fm, "About" };
 	button quitBtn{ fm, "Quit" };
-	quitBtn.events().click([&fm] {fm.close(); });
 	button assignLocationtoVehicle{ fm,"Assign rental location to vehicle" };
 	button addCar{ fm,"Add Vehicle" };
 	button removeCar{ fm,"Remove Vehicle" };
 	button addRentalLocation{ fm,"Add Rental Location" };
 	button removeRentalLocation{ fm,"Remove Rental Location" };
-	button displayAll{ fm,"Display Vehicles, Customers and Rental Locations" };
-	button timerButton{ fm, "Display time counter" };
+	button displayAll{ fm,"Display Database" };
+	button timerButton{ fm, "Display time" };
 	button assignVehtoCust{ fm,"Assign vehicle to customer" };
 	button preferred{ fm,"Set customer to preferred status" };
+	button dateDisplay{ fm, "Display Current Date" };
+	time_t currentTime = time(0);
+	char* dateInString = ctime(&currentTime);
+	label dateDisplayLabel{fm};
+	static int i = 0;
 	//************************************************************************
 
 	//Dummy objects to test the program's other features
@@ -519,6 +525,7 @@ int main()
 
 		rentalLocationsList.events().selected([&] {
 			string fullRLInfo;
+			vehiclesList.clear();
 			for (RentalLocation& rl : rentalLocations) {
 				fullRLInfo = std::to_string(rl.getStreetNumber()) + " " + rl.getStreetName();
 				if (fullRLInfo == rentalLocationsList.text(rentalLocationsList.option())) {
@@ -599,7 +606,6 @@ int main()
 
 		for (Vehicle v : vehicles) {
 			vehCategory.append({ v.getCarCompany(),v.getCarName() });
-
 		}
 
 		for (RentalLocation rl : rentalLocations) {
@@ -650,24 +656,32 @@ int main()
 		API::modal_window(preference);
 		});
 
+	dateDisplay.events().click([&] {
+		dateDisplayLabel.caption("Current Date: " +  string(dateInString));
+		});
 
+	
 
 	clock.elapse([&] {
-		static int i = 0;
-		time.caption("Time: " + std::to_string(i++));
+		timeDisplay.caption(" Time: " + std::to_string(i++));
 		});
 
 
-	timerButton.events().click([&] {
-		clock.start();
+	timerButton.events().click([&] {clock.start();});
+
+	quitBtn.events().click([&fm] {fm.close(); });
+
+	aboutButton.events().click([&fm] {
+		msgbox abtProjectmsg("About Project");
+		abtProjectmsg << "This is a Rental Program where you can manage, i.e add or delete vehicles, customers and rental locations. It also allows for setting customers to the preferred status (Think VIP), display all vehicles, customers with their preferred status and rental locations that are currently in the system as well as assigning vehicles to a rental location of the user's choice along with the future addition of customers renting vehicles as well as returning them.\n\nCreated by: Malik Z\nProgrammed in Visual Studio using the C++ Programming Language and Nana GUI Library\nYou can check back on this project at my GitHub which is MHW-MZX where my project resides in the repository with the name Nana-Vehicle-GUI  ";
+		abtProjectmsg.show();
 		});
-
-
 
 	//Layout management
-	fm.div("vert <<text><time>> vert<<button1><button2>> vert<<button3><button4>> vert<<button5><button6>> vert<<button7><button8>> vert<<button9><button10>> <button11><button12>");
+	fm.div("vert <<text>> vert<<time><date>> vert<<button1><button2>> vert<<button3><button4>> vert<<button5><button6>> vert<<button7><button8>> vert<<button9><button10>> vert<<button11> <button12>> <button13> <button14>");
 	fm["text"] << lab;
-	fm["time"] << time;
+	fm["time"] << timeDisplay;
+	fm["date"] << dateDisplayLabel;
 	fm["button1"] << addCustButton;
 	fm["button2"] << removeCustButton;
 	fm["button3"] << addCar;
@@ -679,7 +693,10 @@ int main()
 	fm["button9"] << assignVehtoCust;
 	fm["button10"] << timerButton;
 	fm["button11"] << preferred;
-	fm["button12"] << quitBtn;
+	fm["button12"] << dateDisplay;
+	fm["button13"] << aboutButton;
+	fm["button14"] << quitBtn;
+
 
 	fm.collocate();
 

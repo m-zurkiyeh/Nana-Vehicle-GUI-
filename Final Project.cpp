@@ -89,6 +89,9 @@ int main()
 	vehicles.push_back(testVeh1);		
 	vehicles.push_back(testVeh2);
 
+	testRl1->addVehicle(testVeh1);
+	testRl2->addVehicle(testVeh2);
+
 	rentalLocations.push_back(*testRl1);
 	rentalLocations.push_back(*testRl2);
 	//*******************************
@@ -540,18 +543,26 @@ int main()
 			}
 
 			registrationButton.events().click([&] {
-				string bd, ed, carInfo, custInfo;
+				string bd, ed, carInfo, custInfo,rLInfo;
 				beginDateInput.getline(0, bd);
 				endDateInput.getline(0, ed);
 				for (Customer& c : customers) {
 					custInfo = c.getFirstName() + " " + c.getLastName();
 					if (custInfo == customerList.text(customerList.option())) {
-						for (Vehicle& v : vehicles) {
-							carInfo = v.getCarCompany() + " " + v.getCarName();
-							if (carInfo == vehiclesList.text(vehiclesList.option())) {
-								c.addRentalVehToList(v);
-								cout << "completed";
-								break;
+						for (RentalLocation& rl : rentalLocations) {
+							rLInfo = std::to_string(rl.getStreetNumber()) + " " + rl.getStreetName();
+							if (rLInfo == rentalLocationsList.text(rentalLocationsList.option())) {
+								for (Vehicle& v : vehicles)	{
+									carInfo = v.getCarCompany() + " " + v.getCarName();
+									if (carInfo == vehiclesList.text(vehiclesList.option())) {
+										int option = vehiclesList.option();
+										c.addRentalVehToList(v);
+										cout << "completed " << vehiclesList.option();
+										vehicles.erase(vehicles.begin() + option);
+										vehiclesList.erase(option);
+										break;
+									}
+								}
 							}
 						}
 					}

@@ -65,6 +65,9 @@ int main()
 	button preferred{ fm,"Set customer to preferred status" };
 	button dateDisplay{ fm, "Display Current Date" };
 	button returnRentedVeh{ fm, "Return rented car" };
+	button editCustomer{ fm,"Edit Customer Info" };
+	button editVehicle{fm,"Edit Vehicle Info"};
+	button editRentalLocation{ fm, "Edit Rental Location Info" };
 	time_t currentTime = time(0);
 	char* dateInString = ctime(&currentTime);
 	label dateDisplayLabel{fm};
@@ -745,25 +748,28 @@ int main()
 
 
 	//Layout management
-	fm.div("vert <<text>> vert<<time><date>> vert<<button1><button2>> vert<<button3><button4>> vert<<button5><button6>> vert<<button7><button8>> vert<<button9><button10>> vert<<button11><button12>> vert<<button13><button14>> <button15>");
+	fm.div("vert <<text>> vert<<time><date>> vert<<button1><button2><button3>> vert<<button4><button5><button6>> vert<<button7><button8><button9>> vert<<button10><button11><button12>> vert<<button13><button14><button15>> <button16> <button17> <button18>");
 	fm["text"] << lab;
 	fm["time"] << timeDisplay;
 	fm["date"] << dateDisplayLabel;
 	fm["button1"] << addCustButton;
-	fm["button2"] << removeCustButton;
-	fm["button3"] << addCar;
-	fm["button4"] << removeCar;
-	fm["button5"] << addRentalLocation;
+	fm["button2"] << editCustomer;
+	fm["button3"] << removeCustButton;
+	fm["button4"] << addRentalLocation;
+	fm["button5"] << editRentalLocation;
 	fm["button6"] << removeRentalLocation;
-	fm["button7"] << assignLocationtoVehicle;
-	fm["button8"] << displayAll;
-	fm["button9"] << assignVehtoCust;
-	fm["button10"] << returnRentedVeh;
-	fm["button11"] << timerButton;
-	fm["button12"] << preferred;
-	fm["button13"] << dateDisplay;
-	fm["button14"] << aboutButton;
-	fm["button15"] << quitBtn;
+	fm["button7"] << addCar;
+	fm["button8"] << editVehicle;
+	fm["button9"] << removeCar;
+	fm["button10"] << assignLocationtoVehicle;
+	fm["button11"] << assignVehtoCust;
+	fm["button12"] << returnRentedVeh;
+	fm["button13"] << displayAll;
+	fm["button14"] << preferred;
+	fm["button15"] << dateDisplay;
+	fm["button16"] << timerButton;
+	fm["button17"] << aboutButton;
+	fm["button18"] << quitBtn;
 
 
 	fm.collocate();

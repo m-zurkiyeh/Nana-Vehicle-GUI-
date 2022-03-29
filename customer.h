@@ -5,6 +5,7 @@
 #ifndef CUSTOMER_H
 #define CUSTOMER_H
 #define MAX_CUSTOMERS 5
+
 using namespace std;
 class Customer {
 private:

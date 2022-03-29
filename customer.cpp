@@ -8,7 +8,7 @@
 #include <vector>
 using namespace std;
 
-
+//Default constructor for the Customer Class
 Customer::Customer() {
 	cout << "Hello fellow customer" << endl;
 }

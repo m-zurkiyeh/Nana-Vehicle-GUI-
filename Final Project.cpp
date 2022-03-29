@@ -179,6 +179,103 @@ int main()
 		API::modal_window(newForm);
 		});
 
+
+
+	editCustomer.events().click([&] {
+		form custList{fm};
+		combox custBox{custList};
+		string custName;
+		button selectCustomer{ custList,"Select Customer" };
+		custList.div("<cb> vert<<scb>>");
+		custList["cb"] << custBox;
+		custList["scb"] << selectCustomer;
+		for (Customer c : customers) {
+			custName = c.getFirstName() + " " + c.getLastName();
+			custBox.push_back(custName);
+		}
+
+		selectCustomer.events().click([&] {
+			string editNotice = "";
+			string customerFirstName, customerLastName, customerAge, customerStreetAddress;
+			for (Customer& c : customers) {
+				custName = c.getFirstName() + " " + c.getLastName();
+				if (custName == custBox.text(custBox.option())) {
+					msgbox custFoundMsg("Customer Search Result!");
+					custFoundMsg << "Customer " << custName << " has been successfully found!";
+					custFoundMsg.show();
+
+					form custEditor{custList};
+					label fnLabel{custEditor,"First Name:"}, lnLabel{custEditor,"Last Name:"}, ageLabel{custEditor,"Age:"}, saLabel{custEditor,"Street Address:"};
+					textbox fnTxt{custEditor}, lnTxt{custEditor}, ageTxt{custEditor}, saTxt{custEditor};
+					button finishEditButton{ custEditor, "Edit occupied attributes"};
+
+					custEditor.div("vert<<fnl><fntxt>> vert<<lnl><lntxt>> vert<<al><atxt>> vert<<sal><satxt>> <editButton>");
+
+					custEditor["fnl"] << fnLabel;
+					custEditor["fntxt"] << fnTxt;
+					custEditor["lnl"] << lnLabel;
+					custEditor["lntxt"] << lnTxt;
+					custEditor["al"] << ageLabel;
+					custEditor["atxt"] << ageTxt;
+					custEditor["sal"] << saLabel;
+					custEditor["satxt"] << saTxt;
+					custEditor["editButton"] << finishEditButton;
+					
+					finishEditButton.events().click([&] {
+						
+						fnTxt.getline(0, customerFirstName);
+						lnTxt.getline(0, customerLastName);
+						ageTxt.getline(0, customerAge);
+						saTxt.getline(0, customerStreetAddress);
+
+						if (!customerFirstName.empty()) {
+							c.setFirstName(customerFirstName);
+							editNotice += "First Name: " + customerFirstName + "\n";
+						}
+
+						if (!customerLastName.empty()) {
+							c.setLastName(customerLastName);
+							editNotice += "Last Name : " + customerLastName + "\n";
+						}
+							
+						if (!customerAge.empty()) {
+							try {
+								c.setAge(stoi(customerAge));
+								editNotice += "Age: " + std::to_string(c.getAge()) + "\n";
+							}
+							catch (...) {
+								msgbox stoiError("Parsing Error");
+								stoiError << "Value entered for age is invalid, Please enter an appropriate value for age or leave it empty ";
+								stoiError.show();
+								return;
+							}
+						}
+
+						if (!customerStreetAddress.empty()) {
+							c.setStreetAddress(customerStreetAddress);
+							editNotice += "Street Address: " + c.getStreetAddress() + "\n";
+						}
+
+						msgbox customerEditResult("Customer Edit Result");
+						customerEditResult << editNotice;
+						customerEditResult.show();
+
+						
+
+					});
+
+					custEditor.collocate();
+					API::modal_window(custEditor);
+				}
+			}
+			});
+		custList.collocate();
+		API::modal_window(custList);
+		});
+
+
+
+
 	removeCustButton.events().click([&] {
 		form deleteForm(fm);
 		button deleteButton{ deleteForm, "Remove Customer" };

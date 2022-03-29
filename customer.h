@@ -18,7 +18,12 @@ private:
 
 public:
 	
+	//Default Constructor for the Customer class
 	Customer();
+	/*
+	* Parameterized constructor for the Customer class
+	* @param fn the customer's first name
+	*/
 	Customer(string fn, string ln, int ageYears, string sa);
 	void addCustomer(Customer cust);
 	void setFirstName(string fn);

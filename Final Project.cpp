@@ -23,10 +23,9 @@
 #include <iostream>
 #include <mmsystem.h>
 #include <stdlib.h>
-#include <nana/audio/player.hpp>
-#include <nana/threads/pool.hpp>
 #include <ctime>
 #include <tchar.h>
+#define NANA_ENABLE_AUDIO
 #pragma comment(lib, "winmm.lib")
 #define EMPTY_COMBO_VALUE 18446744073709551615
 
@@ -72,6 +71,7 @@ int main()
 	char* dateInString = ctime(&currentTime);
 	label dateDisplayLabel{fm};
 	static int i = 0;
+	//nana::audio::player pingring("sonicring.wav");
 	//************************************************************************
 
 	//Dummy objects to test the program's other features
@@ -241,6 +241,7 @@ int main()
 						if (!customerAge.empty()) {
 							try {
 								c.setAge(stoi(customerAge));
+								if(isdigit(stoi(customerAge)))
 								editNotice += "Age: " + std::to_string(c.getAge()) + "\n";
 							}
 							catch (...) {
@@ -259,7 +260,7 @@ int main()
 						msgbox customerEditResult("Customer Edit Result");
 						customerEditResult << editNotice;
 						customerEditResult.show();
-
+						return;
 						
 
 					});
@@ -358,13 +359,11 @@ int main()
 					return;
 				}
 			}
-			//nana::audio::player player("sonicring.wav");
 			vehicles.push_back(veh);
 			msgbox vehicleAddResult("Vehicle Creation Result!");
 			vehicleAddResult << "The Vehicle " << veh.getCarCompany() << " " << veh.getCarName() << " has been successfully created";
 			vehicleAddResult.show();
 			using namespace nana;
-			//ringPing.play();
 
 			for (Vehicle v : vehicles) {
 				if (vehicles.empty()) break;
@@ -376,12 +375,105 @@ int main()
 		API::modal_window(addCarForm);
 		});
 
+
+	/*
+	* Vehicle Attribute Alteration
+	* Includes error detection for when the vehicles vector list is empty as well as leaving all values empty
+	*/
+	editVehicle.events().click([&] {
+		if (vehicles.empty()) {
+			msgbox emptVehList("Vehicle List Error");
+			emptVehList << "Vehicle List is empty! Please add one or more vehicles before proceeding to editing vehicle attributes";
+			emptVehList.show();
+			return;
+		}
+		string* origCarCompany, *origCarName;
+		string editNotice, newCarCompany, newCarName;
+		form vehicleSelectForm{ fm };
+		combox vehicleList{ vehicleSelectForm };
+		button selectVehicle{vehicleSelectForm,"Search Vehicle"};
+
+		vehicleSelectForm.div("vert<<vl>><sv>");
+		vehicleSelectForm["vl"] << vehicleList;
+		vehicleSelectForm["sv"] << selectVehicle;
+
+		for (Vehicle v : vehicles)
+			vehicleList.push_back(v.getCarCompany() + " " + v.getCarName());
+
+		selectVehicle.events().click([&] {
+			for (Vehicle v : vehicles) {
+				if (vehicleList.option() == EMPTY_COMBO_VALUE) {
+					msgbox emptOption("Empty Option Selected");
+					emptOption << "Invalid Option detected!\nPlease select a valid choice";
+					emptOption.show();
+					return;
+				}
+				if ((v.getCarCompany() + " " + v.getCarName()) == vehicleList.text(vehicleList.option())) {
+					msgbox vehFound("Vehicle Search Result");
+					vehFound << "Vehicle Search Successful";
+					vehFound.show();
+					origCarCompany = &v.getCarCompany();
+					origCarName = &v.getCarName();
+
+					form vehicleEditor{ fm };
+					label ccLabel{ vehicleEditor, "Car Company" }, cnLabel{ vehicleEditor, "Car Name" };
+					textbox ccTxt{ vehicleEditor }, cnTxt{ vehicleEditor };
+					button finalizeEdit{ vehicleEditor, "Edit Car Attributes" };
+
+					vehicleEditor.div("vert<<ccl><cctxt>> vert<<cnl><cntxt>> <editButton>");
+					vehicleEditor["ccl"] << ccLabel;
+					vehicleEditor["cctxt"] << ccTxt;
+					vehicleEditor["cnl"] << cnLabel;
+					vehicleEditor["cntxt"] << cnTxt;
+					vehicleEditor["editButton"] << finalizeEdit;
+
+					finalizeEdit.events().click([&] {
+						for (Vehicle& v : vehicles) {
+							if ((v.getCarCompany() + " " + v.getCarName()) == vehicleList.text(vehicleList.option())) {
+								if (ccTxt.empty() && cnTxt.empty()) {
+									msgbox allEmptVals("No Values Entered!");
+									allEmptVals << "All attributes have been left blank!\nPlease Fill at least one of the boxes before editing";
+									allEmptVals.show();
+									return;
+								}
+								if(!ccTxt.empty()) {
+									ccTxt.getline(0, newCarCompany);
+									v.setCarCompany(newCarCompany);
+									editNotice += "Car Company: " + *origCarCompany + "  -> " + newCarCompany + "\n";
+								}
+								if (!cnTxt.empty()) {
+									cnTxt.getline(0, newCarName);
+									v.setCarName(newCarName);
+									editNotice += "Car Name: " + *origCarName + "  -> " + v.getCarName() + "\n";
+								}
+								msgbox vehEditResult("Vehicle Edit Result");
+								vehEditResult << "Vehicle has been successfully changed!\n" + editNotice;
+								delete origCarCompany;
+								delete origCarName;
+								vehEditResult.show();
+								break;
+							}
+						}
+					});
+
+					vehicleEditor.collocate();
+					API::modal_window(vehicleEditor);
+				}
+			}
+			});
+		vehicleSelectForm.collocate();
+		API::modal_window(vehicleSelectForm);
+		});
+
+
+	/*
+	* Car Removal
+	*/
 	removeCar.events().click([&] {
 
 		form removeCarForm(fm);
 		combox removeCarCombo(removeCarForm);
 		button finalizeCarRemoval{ removeCarForm,"Remove Vehicle" };
-
 
 		removeCarForm.div("vert <CCMB><CCB>");
 		removeCarForm["CCMB"] << removeCarCombo;
@@ -500,6 +592,48 @@ int main()
 		addRentalLocationForm.collocate();
 		API::modal_window(addRentalLocationForm);
 		});
+
+
+
+	editRentalLocation.events().click([&] {
+		form rlSelectionMenu{ fm };
+		combox rlList{ rlSelectionMenu };
+		button selectRL{ rlSelectionMenu, "Select Rental Location"};
+		int* origRLSnum;
+		string*	origRLStrtName, origRLStrtPstlCode;
+		string editNotice;
+		
+		rlSelectionMenu.div("vert<<rll>> <srl>");
+		rlSelectionMenu["rll"] << rlList;
+		rlSelectionMenu["srl"] << selectRL;
+
+		for (RentalLocation rl : rentalLocations) {
+			rlList.push_back(std::to_string(rl.getStreetNumber()) + " " + rl.getStreetName() + " " + rl.getPostalCode());
+		}
+
+		selectRL.events().click([&] {
+			for (RentalLocation& rl : rentalLocations) {
+				if ((std::to_string(rl.getStreetNumber()) + " " + rl.getStreetName() + " " + rl.getPostalCode()) == rlList.text(rlList.option())) {
+					msgbox rlSearchSuccess("Rental Location Search Result");
+					rlSearchSuccess << "Rental Location has been successfully found!";
+					rlSearchSuccess.show();
+					
+					form rlEditMenu{ fm };
+					label sNumLbl{rlEditMenu,"Street Number: "}, sNameLbl{rlEditMenu,"Street Name: "}, pcLbl{rlEditMenu,"Postal Code: "};
+					textbox sNumTxt{ rlEditMenu }, sNameTxt{ rlEditMenu };
+				}
+			}
+		});
+		
+		rlSelectionMenu.collocate();
+		API::modal_window(rlSelectionMenu);
+		
+	});
+
+
+
+
+
 
 	removeRentalLocation.events().click([&] {
 		int i = 0;

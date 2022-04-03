@@ -599,8 +599,7 @@ int main()
 		form rlSelectionMenu{ fm };
 		combox rlList{ rlSelectionMenu };
 		button selectRL{ rlSelectionMenu, "Select Rental Location"};
-		int* origRLSnum;
-		string*	origRLStrtName, origRLStrtPstlCode;
+		string*	origStrtName, *origPstlCode, *origSnum, newStrtNum, newStrtName, newPstlCode ;
 		string editNotice;
 		
 		rlSelectionMenu.div("vert<<rll>> <srl>");
@@ -617,10 +616,65 @@ int main()
 					msgbox rlSearchSuccess("Rental Location Search Result");
 					rlSearchSuccess << "Rental Location has been successfully found!";
 					rlSearchSuccess.show();
-					
+					origSnum = &std::to_string(rl.getStreetNumber());
+					origStrtName = &rl.getStreetName();
+					origPstlCode = &rl.getPostalCode();
+
 					form rlEditMenu{ fm };
 					label sNumLbl{rlEditMenu,"Street Number: "}, sNameLbl{rlEditMenu,"Street Name: "}, pcLbl{rlEditMenu,"Postal Code: "};
-					textbox sNumTxt{ rlEditMenu }, sNameTxt{ rlEditMenu };
+					textbox sNumTxt{ rlEditMenu }, sNameTxt{ rlEditMenu }, pstlCodeTxt{ rlEditMenu };
+					button finalizeEdit{ rlEditMenu };
+					rlEditMenu.div("vert<<rl#Lbl><rl#Txt>> vert<<rlSaLbl><rlSaTxt>> vert<<rlPcLbl><rlPcTxt>> <editBtn>");
+					
+					rlEditMenu["rl#Lbl"] << sNumLbl;
+					rlEditMenu["rl#Txt"] << sNumTxt;
+					rlEditMenu["rlSaLbl"] << sNameLbl;
+					rlEditMenu["rlSaTxt"] << sNameTxt;
+					rlEditMenu["rlPcLbl"] << pcLbl;
+					rlEditMenu["rlPcTxt"] << pstlCodeTxt;
+					rlEditMenu["editBtn"] << finalizeEdit;
+
+
+					finalizeEdit.events().click([&] {
+						sNumTxt.getline(0, newStrtNum);
+						sNameTxt.getline(0, newStrtName);
+						pstlCodeTxt.getline(0, newPstlCode);
+						for (RentalLocation& rl : rentalLocations) {
+							if ((std::to_string(rl.getStreetNumber()) + " " + rl.getStreetName() + " " + rl.getPostalCode()) == rlList.text(rlList.option())) {
+								if (!sNumTxt.empty()) {
+									try {
+										rl.setStreetNumber(stoi(newStrtNum));
+										editNotice += "\nStreet Number: " + *origSnum + "  ->  " + newStrtNum + '\n';
+									}
+									catch (...) {
+										msgbox intParseErr("Integer Parsing Error");
+										intParseErr << "Invalid input for street number detected\n Please enter an int value";
+										intParseErr.show();
+										return;
+									}
+								}
+
+								if (!sNameTxt.empty()) {
+									rl.setStreetName(newStrtName);
+									editNotice += "Street Name: " + *origStrtName + "  ->  " + newStrtName + '\n';
+								}
+
+								if (!pstlCodeTxt.empty()) {
+									rl.setPostalCode(newPstlCode);
+									editNotice += "Postal Code: " + *origPstlCode + "  ->  " + newPstlCode + '\n';
+								}
+
+								msgbox editResult("Rental Location Edit Result");
+								editResult << "The following attributes have been successfully edited:" << editNotice;
+								editResult.show();
+								delete origStrtName, origSnum, origPstlCode;
+							}
+						}
+						
+					});
+
+					rlEditMenu.collocate();
+					API::modal_window(rlEditMenu);
 				}
 			}
 		});
